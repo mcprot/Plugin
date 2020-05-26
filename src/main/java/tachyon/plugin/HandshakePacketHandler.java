@@ -49,7 +49,7 @@ public class HandshakePacketHandler extends PacketAdapter {
                 String ipData = payload[1];
                 String[] ts_sig = payload[2].split("///", 2);
                 if (ts_sig.length >= 2) {
-                    int timestamp = Integer.parseInt(ts_sig[0]);
+                    long timestamp = Long.parseLong(ts_sig[0]);
                     String signature = ts_sig[1];
 
                     String[] hostnameParts = ipData.split(":");
