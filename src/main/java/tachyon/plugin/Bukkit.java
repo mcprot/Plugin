@@ -1,15 +1,16 @@
-package net.tcpshield.realip;
+package tachyon.plugin;
 
 import com.comphenix.protocol.ProtocolLibrary;
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class TCPShieldBukkit extends JavaPlugin implements Listener {
-    private static TCPShieldBukkit INSTANCE;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+
+public class Bukkit extends JavaPlugin implements Listener {
+    private static Bukkit INSTANCE;
     private static Boolean stopping = Boolean.valueOf(false);
     private boolean onlyProxy;
     private boolean debugMode;
@@ -38,7 +39,7 @@ public class TCPShieldBukkit extends JavaPlugin implements Listener {
         INSTANCE = null;
     }
 
-    public static TCPShieldBukkit getInstance() {
+    public static Bukkit getInstance() {
         if (stopping.booleanValue()) {
             throw new IllegalAccessError("Plugin is disabling!");
         }

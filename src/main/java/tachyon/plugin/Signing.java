@@ -1,14 +1,9 @@
-package net.tcpshield.realip;
+package tachyon.plugin;
 
 import com.google.common.io.ByteStreams;
 
 import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import java.security.Signature;
-import java.security.SignatureException;
+import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
@@ -18,7 +13,7 @@ public class Signing {
 
     public static void init()
             throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        byte[] encodedKey = ByteStreams.toByteArray(Signing.class.getResourceAsStream("/signing_pub.key"));
+        byte[] encodedKey = ByteStreams.toByteArray(Signing.class.getResourceAsStream("/tachyon.pub"));
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encodedKey);
 
         KeyFactory keyFactory = KeyFactory.getInstance("EC");

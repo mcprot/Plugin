@@ -1,5 +1,5 @@
-name: TCPShield
+name: Tachyon
 version: 1.8
-main: net.tcpshield.realip.TCPShieldBukkit
+main: tachyon.plugin.Bukkit
 depend: ['ProtocolLib']
-author: 'https://tcpshield.com'
+website: 'https://tachyon.host'

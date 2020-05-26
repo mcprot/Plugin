@@ -1,4 +1,4 @@
-package net.tcpshield.realip;
+package tachyon.plugin;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketAdapter;
@@ -7,6 +7,7 @@ import com.comphenix.protocol.injector.server.SocketInjector;
 import com.comphenix.protocol.injector.server.TemporaryPlayerFactory;
 import io.netty.channel.AbstractChannel;
 import io.netty.channel.Channel;
+import org.bukkit.entity.Player;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -17,9 +18,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-
 public class HandshakePacketHandler extends PacketAdapter {
     private String properField = null;
     private final Logger logger;
@@ -27,7 +25,7 @@ public class HandshakePacketHandler extends PacketAdapter {
     private final boolean debugMode;
 
     public HandshakePacketHandler(Logger logger, boolean onlyProxy, boolean debugMode) {
-        super(TCPShieldBukkit.getInstance(), new PacketType[]{PacketType.Handshake.Client.SET_PROTOCOL});
+        super(Bukkit.getInstance(), new PacketType[]{PacketType.Handshake.Client.SET_PROTOCOL});
         this.logger = logger;
         this.onlyProxy = onlyProxy;
         this.debugMode = debugMode;
@@ -111,7 +109,7 @@ public class HandshakePacketHandler extends PacketAdapter {
     }
 
     private String getNmsPackage() {
-        String obcString = Bukkit.getServer().getClass().getPackage().getName();
+        String obcString = org.bukkit.Bukkit.getServer().getClass().getPackage().getName();
         String versionString = obcString.substring(obcString.lastIndexOf('.') + 1);
         return "net.minecraft.server." + versionString;
     }

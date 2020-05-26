@@ -1,4 +1,4 @@
-# Please keep this as true in while using TCPShield!
+# Please keep this as true in while using Tachyon!
 only-allow-proxy-connections: true
 
 # Turn on to diagnose connection issues

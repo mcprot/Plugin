@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.tcpshield.realip</groupId>
-    <artifactId>TCPShield</artifactId>
-    <version>1.7-SNAPSHOT</version>
+    <groupId>tachyon.plugin</groupId>
+    <artifactId>TachyonPlugin</artifactId>
+    <version>1.8-SNAPSHOT</version>
     <properties>
         <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
     </properties>
@@ -55,7 +55,7 @@
     </dependencies>
 
     <build>
-        <finalName>TCPShield</finalName>
+        <finalName>Tachyon</finalName>
         <sourceDirectory>src/main/java</sourceDirectory>
         <resources>
             <resource>
@@ -64,7 +64,7 @@
                 <directory>${basedir}/src/main/resources/</directory>
                 <includes>
                     <include>*.yml</include>
-                    <include>*.key</include>
+                    <include>*.pub</include>
                 </includes>
             </resource>
         </resources>
