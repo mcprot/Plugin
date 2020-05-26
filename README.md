@@ -1,13 +1,14 @@
-# RealIP
-Bungee/Spigot plugin which parses client IP addresses passed from the TCPShield network.
+# Tachyon Plugin
+Bungee/Spigot Plugin which parses client IP addresses passed from the Tachyon network.
 
 ### Compiling
-To compile this project, install maven and run the following command:
+To compile this project, install Maven and run the following command:
 ```
 mvn clean install
 ```
 
 ### Support
-Please contact [@RyanDeLap](https://t.me/RyanDeLap) on Telegram for all support related to this product.
+Contact us via our website.
 
-Before contact, ensure you have tested with no Bungee Plugins installed. Plugins like BungeePluginManager will break this plugin!
+Before contact, ensure you have tested with no Bungee Plugins installed. 
+Plugins like BungeePluginManager will break this plugin!
