@@ -3,26 +3,24 @@ package tachyon.plugin;
 import io.netty.channel.AbstractChannel;
 import io.netty.channel.Channel;
 import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.event.PlayerHandshakeEvent;
 import net.md_5.bungee.api.event.ProxyPingEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
-import net.md_5.bungee.api.plugin.PluginManager;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 import net.md_5.bungee.event.EventHandler;
+import tachyon.plugin.utils.ReflectionUtils;
+import tachyon.plugin.utils.Signing;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -35,19 +33,19 @@ public class Bungee extends Plugin implements Listener {
 
     public void onEnable() {
         saveDefaultConfig();
-        Configuration config = loadConfig();
+        Configuration config = getConfig();
+
         try {
             Signing.init();
         } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
             getLogger().severe("Couldn't initialize signing module.");
             throw new RuntimeException(e);
         }
-        this.onlyProxy = config.getBoolean("only-allow-proxy-connections");
-        this.debugMode = config.getBoolean("debug-mode");
 
-        ProxyServer proxy = getProxy();
-        PluginManager pluginManager = proxy.getPluginManager();
-        pluginManager.registerListener(this, this);
+        onlyProxy = config.getBoolean("only-allow-proxy-connections");
+        debugMode = config.getBoolean("debug-mode");
+
+        getProxy().getPluginManager().registerListener(this, this);
 
         Logger logger = ProxyServer.getInstance().getLogger();
         Logger newLogger = new Logger("BungeeCord", null) {
@@ -60,194 +58,121 @@ public class Bungee extends Plugin implements Listener {
         };
         newLogger.setParent(logger);
         try {
-            set(ProxyServer.getInstance(), "logger", newLogger);
+            ReflectionUtils.setFinalField(ProxyServer.getInstance().getClass(), ProxyServer.getInstance(), "logger", newLogger);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private Configuration loadConfig() {
+    private Configuration getConfig() {
         try {
-            ConfigurationProvider configProvider = ConfigurationProvider.getProvider(YamlConfiguration.class);
-            File configFile = getConfigFile();
-            return configProvider.load(configFile);
+            return ConfigurationProvider.getProvider(YamlConfiguration.class).load(new File(getDataFolder(), "config.yml"));
         } catch (IOException e) {
             throw new RuntimeException("Couldn't load config", e);
         }
     }
 
     private void saveDefaultConfig() {
-        File dataFolder = getDataFolder();
-        if (!dataFolder.exists()) {
-            dataFolder.mkdir();
-        }
-        File file = getConfigFile();
+        if (!getDataFolder().exists())
+            getDataFolder().mkdir();
+
+        File file = new File(getDataFolder(), "config.yml");
+
         if (!file.exists()) {
-            try {
-                InputStream in = getResourceAsStream("config.yml");
-                Throwable localThrowable3 = null;
-                try {
-                    Files.copy(in, file.toPath(), new CopyOption[0]);
-                } catch (Throwable localThrowable1) {
-                    localThrowable3 = localThrowable1;
-                    throw localThrowable1;
-                } finally {
-                    if (in != null) {
-                        if (localThrowable3 != null) {
-                            try {
-                                in.close();
-                            } catch (Throwable localThrowable2) {
-                                localThrowable3.addSuppressed(localThrowable2);
-                            }
-                        } else {
-                            in.close();
-                        }
-                    }
-                }
+            try (InputStream in = getResourceAsStream("config.yml")) {
+                Files.copy(in, file.toPath());
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private File getConfigFile() {
-        File dataFolder = getDataFolder();
-        return new File(dataFolder, "config.yml");
-    }
-
     @EventHandler(priority = -64)
     public void onProxyPingEvent(ProxyPingEvent event) {
-        if(event.getConnection().isLegacy()) {
+        if (event.getConnection().isLegacy()) {
             try {
-                Field wrapperField = event.getConnection().getClass().getDeclaredField("ch");
-                wrapperField.setAccessible(true);
-                Object wrapper = wrapperField.get(event.getConnection());
-                wrapperField.setAccessible(false);
-                Method m = wrapper.getClass().getMethod("close");
-                m.invoke(wrapper);
-
-            } catch(Exception e) {
-                event.getConnection().disconnect(new BaseComponent[0]);
+                Object ch = ReflectionUtils.getPrivateField(event.getConnection().getClass(), event.getConnection(), Object.class, "ch");
+                Method m = ch.getClass().getMethod("close");
+                m.invoke(ch);
+            } catch (Exception e) {
+                event.getConnection().disconnect();
             }
         }
     }
 
     @EventHandler(priority = -64)
-    public void onPlayerHandshake(PlayerHandshakeEvent e) {
+    public void onPlayerHandshake(PlayerHandshakeEvent event) {
         boolean proxyConnection = false;
         Channel channel = null;
+        PendingConnection connection = event.getConnection();
+
         try {
-            Field wrapperField = e.getConnection().getClass().getDeclaredField("ch");
-            wrapperField.setAccessible(true);
-            Object wrapper = wrapperField.get(e.getConnection());
-            wrapperField.setAccessible(false);
+            Object ch = ReflectionUtils.getPrivateField(connection.getClass(), connection, Object.class, "ch");
+            Method method = ch.getClass().getDeclaredMethod("getHandle");
+            channel = (Channel) method.invoke(ch, new Object[0]);
 
-            Field chField = wrapper.getClass().getDeclaredField("ch");
-            chField.setAccessible(true);
-            Channel ch = (Channel) chField.get(wrapper);
-            chField.setAccessible(false);
-            channel = ch;
-            if (e.getHandshake().getHost().contains("//")) {
-                String raw = e.getHandshake().getHost();
+            if (event.getHandshake().getHost().contains("//")) {
+                String raw = event.getHandshake().getHost();
 
-                String[] payload = raw.split("///", 3);
-                if (payload.length >= 3) {
+                String[] payload = raw.split("///", 4);
+                if (payload.length >= 4) {
                     String hostname = payload[0];
                     String ipData = payload[1];
-                    String[] ts_sig = payload[2].split("///", 2);
-                    if (ts_sig.length >= 2) {
-                        int timestamp = Integer.parseInt(ts_sig[0]);
-                        String signature = ts_sig[1];
+                    int timestamp = Integer.parseInt(payload[2]);
+                    String signature = payload[3];
 
-                        String[] hostnameParts = ipData.split(":");
-                        String host = hostnameParts[0];
-                        int port = Integer.parseInt(hostnameParts[1]);
+                    String[] hostnameParts = ipData.split(":");
+                    String host = hostnameParts[0];
+                    int port = Integer.parseInt(hostnameParts[1]);
 
-                        String reconstructedPayload = hostname + "///" + host + ":" + port + "///" + timestamp;
+                    String reconstructedPayload = hostname + "///" + host + ":" + port + "///" + timestamp;
 
-                        if (signature.contains("%%%")) {
-                            signature = signature.split("%%%", 2)[0];
-                        }
-
-                        if (!Signing.verify(reconstructedPayload.getBytes(StandardCharsets.UTF_8), signature)) {
-                            throw new Exception("Couldn't verify signature.");
-                        }
-
-                        long currentTime = System.currentTimeMillis() / 1000;
-
-                        if(!(timestamp >= (currentTime - 2) && timestamp <= (currentTime + 2))) {
-                            if(this.debugMode) {
-                                getLogger().warning("Current time: " + currentTime + ", Timestamp Time: "  + timestamp);
-                            }
-                            throw new Exception("Invalid signature timestamp, please check system's local clock if error persists.");
-                        }
-
-                        PendingConnection connection = e.getConnection();
-
-                        InetSocketAddress sockadd = new InetSocketAddress(host, port);
-                        proxyConnection = true;
-                        try {
-                            set(wrapper.getClass(), wrapper, "remoteAddress", sockadd);
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
-                        try {
-                            set(AbstractChannel.class, ch, "remoteAddress", sockadd);
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
-                        try {
-                            set(AbstractChannel.class, ch, "localAddress", sockadd);
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
-                        InetSocketAddress virtualHost = new InetSocketAddress(hostname, e.getHandshake().getPort());
-                        try {
-                            set(connection, "virtualHost", virtualHost);
-                        } catch (Exception ex) {
-                            try {
-                                set(connection, "vHost", virtualHost);
-                            } catch (Exception e2) {
-                                e2.printStackTrace();
-                            }
-                        }
-                        try {
-                            set(e.getHandshake(), "host", hostname);
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
+                    if (signature.contains("%%%")) {
+                        signature = signature.split("%%%", 2)[0];
                     }
+
+                    if (!Signing.verify(reconstructedPayload.getBytes(StandardCharsets.UTF_8), signature)) {
+                        throw new Exception("Couldn't verify signature.");
+                    }
+
+                    long currentTime = System.currentTimeMillis() / 1000;
+
+                    if (!(timestamp >= (currentTime - 2) && timestamp <= (currentTime + 2))) {
+                        if (debugMode) {
+                            getLogger().warning("Current time: " + currentTime + ", Timestamp Time: " + timestamp);
+                        }
+                        throw new Exception("Invalid signature timestamp, please check system's local clock if error persists.");
+                    }
+                    proxyConnection = true;
+
+                    InetSocketAddress sockadd = new InetSocketAddress(host, port);
+                    ReflectionUtils.setFinalField(ch.getClass(), ch, "remoteAddress", sockadd);
+                    ReflectionUtils.setFinalField(AbstractChannel.class, channel, "remoteAddress", sockadd);
+                    ReflectionUtils.setFinalField(AbstractChannel.class, channel, "localAddress", sockadd);
+
+                    InetSocketAddress virtualHost = new InetSocketAddress(hostname, event.getHandshake().getPort());
+                    try {
+                        ReflectionUtils.setFinalField(connection.getClass(), connection, "virtualHost", virtualHost);
+                    } catch (Exception ex) {
+                        ReflectionUtils.setFinalField(connection.getClass(), connection, "vHost", virtualHost);
+                    }
+                    ReflectionUtils.setFinalField(event.getHandshake().getClass(), event.getHandshake(), "host", hostname);
                 }
             }
         } catch (Exception localException) {
             localException.printStackTrace();
         } finally {
-            if (this.onlyProxy && !proxyConnection) {
-                Logger logger = getLogger();
-                PendingConnection connection = e.getConnection();
-                if(this.debugMode) {
-                    logger.warning("Disconnecting " + connection.getAddress() + " because no proxy info was received and only-allow-proxy-connections is enabled.");
+            if (onlyProxy && !proxyConnection) {
+                if (debugMode) {
+                    getLogger().warning("Disconnecting " + connection.getAddress() + " because no proxy info was received and only-allow-proxy-connections is enabled.");
                 }
+
                 if (channel != null) {
                     channel.flush().close();
                 } else {
-                    connection.disconnect(new BaseComponent[0]);
+                    connection.disconnect();
                 }
             }
         }
-    }
-
-    protected static void set(Object main_object, String field, Object value)
-            throws Exception {
-        Field f = main_object.getClass().getDeclaredField(field);
-        f.setAccessible(true);
-        f.set(main_object, value);
-    }
-
-    protected static void set(Class<?> c, Object main_object, String field, Object value)
-            throws Exception {
-        Field f = c.getDeclaredField(field);
-        f.setAccessible(true);
-        f.set(main_object, value);
     }
 }

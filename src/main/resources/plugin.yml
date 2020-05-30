@@ -1,5 +1,5 @@
 name: Tachyon
-version: 1.8
+version: ${project.version}
 main: tachyon.plugin.Bukkit
 depend: ['ProtocolLib']
 website: 'https://tachyon.host'

@@ -1,4 +1,4 @@
 name: Tachyon
-version: 1.8
+version: ${project.version}
 main: tachyon.plugin.Bungee
 website: 'https://tachyon.host'
