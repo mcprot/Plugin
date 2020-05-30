@@ -30,7 +30,7 @@ public class HandshakePacketHandler extends PacketAdapter {
 
     public void onPacketReceiving(PacketEvent event) {
         boolean proxyConnection = false;
-        String raw = null;
+        String raw;
         try {
             raw = event.getPacket().getStrings().read(0);
             String extraData = "";
@@ -104,11 +104,5 @@ public class HandshakePacketHandler extends PacketAdapter {
                 player.kickPlayer("");
             }
         }
-    }
-
-    private String getNmsPackage() {
-        String obcString = org.bukkit.Bukkit.getServer().getClass().getPackage().getName();
-        String versionString = obcString.substring(obcString.lastIndexOf('.') + 1);
-        return "net.minecraft.server." + versionString;
     }
 }
