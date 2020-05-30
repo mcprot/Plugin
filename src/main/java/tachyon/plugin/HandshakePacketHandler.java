@@ -21,8 +21,8 @@ public class HandshakePacketHandler extends PacketAdapter {
     private final boolean debugMode;
     private String properField = null;
 
-    public HandshakePacketHandler(Logger logger, boolean onlyProxy, boolean debugMode) {
-        super(Bukkit.getInstance(), PacketType.Handshake.Client.SET_PROTOCOL);
+    public HandshakePacketHandler(Bukkit instance, Logger logger, boolean onlyProxy, boolean debugMode) {
+        super(instance, PacketType.Handshake.Client.SET_PROTOCOL);
         this.logger = logger;
         this.onlyProxy = onlyProxy;
         this.debugMode = debugMode;
@@ -40,50 +40,57 @@ public class HandshakePacketHandler extends PacketAdapter {
             }
             raw = hostnameSplits[0];
 
-            String[] payload = raw.split("///", 3);
-            if (payload.length >= 3) {
+            String[] payload = raw.split("///", 4);
+            if (payload.length >= 4) {
                 String hostname = payload[0];
                 String ipData = payload[1];
-                String[] ts_sig = payload[2].split("///", 2);
-                if (ts_sig.length >= 2) {
-                    long timestamp = Long.parseLong(ts_sig[0]);
-                    String signature = ts_sig[1];
+                long timestamp = Long.parseLong(payload[2]);
+                String signature = payload[3];
 
-                    String[] hostnameParts = ipData.split(":");
-                    String host = hostnameParts[0];
-                    int port = Integer.parseInt(hostnameParts[1]);
+                String[] hostnameParts = ipData.split(":");
+                String host = hostnameParts[0];
+                int port = Integer.parseInt(hostnameParts[1]);
 
-                    String reconstructedPayload = hostname + "///" + host + ":" + port + "///" + timestamp;
+                String reconstructedPayload = hostname + "///" + host + ":" + port + "///" + timestamp;
 
-                    if (!Signing.verify(reconstructedPayload.getBytes(StandardCharsets.UTF_8), signature)) {
-                        throw new Exception("Couldn't verify signature.");
+                if (!Signing.verify(reconstructedPayload.getBytes(StandardCharsets.UTF_8), signature)) {
+                    throw new Exception("Couldn't verify signature.");
+                }
+
+                long currentTime = System.currentTimeMillis() / 1000;
+
+                if (!(timestamp >= (currentTime - 2) && timestamp <= (currentTime + 2))) {
+                    if (debugMode) {
+                        logger.warning("Current time: " + currentTime + ", Timestamp Time: " + timestamp);
                     }
+                    throw new Exception("Invalid signature timestamp, please check system's local clock if error persists.");
+                }
+
+                try {
+                    SocketInjector ignored = TemporaryPlayerFactory.getInjectorFromPlayer(event.getPlayer());
+
+                    Object injector = ReflectionUtils.getPrivateField(ignored.getClass(), ignored, "injector");
+                    Object networkManager = ReflectionUtils.getPrivateField(injector.getClass(), injector, "networkManager");
+
+                    if (properField == null) {
+                        properField = ReflectionUtils.getProperField(networkManager.getClass());
+                    }
+
+                    Channel channel = (Channel) ReflectionUtils.getPrivateField(injector.getClass(), injector, "originalChannel");
+                    InetSocketAddress newRemoteAddress = new InetSocketAddress(host, port);
+                    proxyConnection = true;
                     try {
-                        SocketInjector ignored = TemporaryPlayerFactory.getInjectorFromPlayer(event.getPlayer());
-
-                        Object injector = ReflectionUtils.getPrivateField(ignored.getClass(), ignored, "injector");
-                        Object networkManager = ReflectionUtils.getPrivateField(injector.getClass(), injector, "networkManager");
-
-                        if (properField == null) {
-                            properField = ReflectionUtils.getProperField(networkManager.getClass());
-                        }
-
-                        Channel channel = (Channel) ReflectionUtils.getPrivateField(injector.getClass(), injector, "originalChannel");
-                        InetSocketAddress newRemoteAddress = new InetSocketAddress(host, port);
-                        proxyConnection = true;
-                        try {
-                            ReflectionUtils.setFinalField(networkManager.getClass(), networkManager, this.properField == null ? "l" : this.properField, newRemoteAddress);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                        ReflectionUtils.setFinalField(AbstractChannel.class, channel, "remoteAddress", newRemoteAddress);
+                        ReflectionUtils.setFinalField(networkManager.getClass(), networkManager, this.properField == null ? "l" : this.properField, newRemoteAddress);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-
-                    hostname = hostname + extraData;
-                    event.getPacket().getStrings().write(0, hostname);
+                    ReflectionUtils.setFinalField(AbstractChannel.class, channel, "remoteAddress", newRemoteAddress);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
+
+                hostname = hostname + extraData;
+                event.getPacket().getStrings().write(0, hostname);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -93,10 +100,6 @@ public class HandshakePacketHandler extends PacketAdapter {
 
                 if (debugMode) {
                     logger.warning("Disconnecting " + player.getAddress() + " because no proxy info was received and only-allow-proxy-connections is enabled.");
-                }
-
-                if (raw != null) {
-                    logger.warning(raw);
                 }
                 player.kickPlayer("");
             }

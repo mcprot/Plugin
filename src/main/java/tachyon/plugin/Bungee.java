@@ -32,9 +32,6 @@ public class Bungee extends Plugin implements Listener {
     private boolean debugMode;
 
     public void onEnable() {
-        saveDefaultConfig();
-        Configuration config = getConfig();
-
         try {
             Signing.init();
         } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
@@ -42,6 +39,8 @@ public class Bungee extends Plugin implements Listener {
             throw new RuntimeException(e);
         }
 
+        saveDefaultConfig();
+        Configuration config = getConfig();
         onlyProxy = config.getBoolean("only-allow-proxy-connections");
         debugMode = config.getBoolean("debug-mode");
 
@@ -67,8 +66,8 @@ public class Bungee extends Plugin implements Listener {
     private Configuration getConfig() {
         try {
             return ConfigurationProvider.getProvider(YamlConfiguration.class).load(new File(getDataFolder(), "config.yml"));
-        } catch (IOException e) {
-            throw new RuntimeException("Couldn't load config", e);
+        } catch (IOException exception) {
+            throw new RuntimeException("Couldn't load config", exception);
         }
     }
 
@@ -118,7 +117,7 @@ public class Bungee extends Plugin implements Listener {
                 if (payload.length >= 4) {
                     String hostname = payload[0];
                     String ipData = payload[1];
-                    int timestamp = Integer.parseInt(payload[2]);
+                    long timestamp = Long.parseLong(payload[2]);
                     String signature = payload[3];
 
                     String[] hostnameParts = ipData.split(":");

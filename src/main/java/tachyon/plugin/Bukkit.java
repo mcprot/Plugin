@@ -11,17 +11,12 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
 public class Bukkit extends JavaPlugin implements Listener {
-    private static Bukkit INSTANCE;
-    private static boolean stopping = false;
-
     public void onEnable() {
-        INSTANCE = this;
-
         try {
             Signing.init();
-        } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+        } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException exception) {
             getLogger().severe("Couldn't initialize signing module.");
-            throw new RuntimeException(e);
+            throw new RuntimeException(exception);
         }
 
         saveDefaultConfig();
@@ -29,20 +24,9 @@ public class Bukkit extends JavaPlugin implements Listener {
         boolean onlyProxy = config.getBoolean("only-allow-proxy-connections");
         boolean debugMode = config.getBoolean("debug-mode");
 
-        ProtocolLibrary.getProtocolManager().addPacketListener(new HandshakePacketHandler(getLogger(), onlyProxy, debugMode));
-
+        ProtocolLibrary.getProtocolManager().addPacketListener(new HandshakePacketHandler(this, getLogger(), onlyProxy, debugMode));
     }
-
 
     public void onDisable() {
-        stopping = true;
-        INSTANCE = null;
-    }
-
-    public static Bukkit getInstance() {
-        if (stopping) {
-            throw new IllegalAccessError("Plugin is disabling!");
-        }
-        return INSTANCE;
     }
 }
