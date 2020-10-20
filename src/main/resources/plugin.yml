@@ -1,5 +1,5 @@
-name: Tachyon
+name: MCProt
 version: ${project.version}
-main: tachyon.plugin.Bukkit
+main: com.mcprot.plugin.Bukkit
 depend: ['ProtocolLib']
-website: 'https://tachyon.host'
+website: 'https://mcprot.com'

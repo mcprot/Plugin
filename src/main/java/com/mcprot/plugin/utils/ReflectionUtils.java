@@ -1,4 +1,4 @@
-package tachyon.plugin.utils;
+package com.mcprot.plugin.utils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;

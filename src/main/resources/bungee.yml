@@ -1,4 +1,4 @@
 name: Tachyon
 version: ${project.version}
-main: tachyon.plugin.Bungee
-website: 'https://tachyon.host'
+main: com.mcprot.plugin.Bungee
+website: 'https://mcprot.com'

@@ -1,15 +1,14 @@
-package tachyon.plugin;
+package com.mcprot.plugin;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.injector.server.SocketInjector;
 import com.comphenix.protocol.injector.server.TemporaryPlayerFactory;
+import com.mcprot.plugin.utils.ReflectionUtils;
 import io.netty.channel.AbstractChannel;
 import io.netty.channel.Channel;
 import org.bukkit.entity.Player;
-import tachyon.plugin.utils.ReflectionUtils;
-import tachyon.plugin.utils.Signing;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -59,11 +58,11 @@ public class HandshakePacketHandler extends PacketAdapter {
 
                 long currentTime = System.currentTimeMillis() / 1000;
 
-                if (!(timestamp >= (currentTime - 2) && timestamp <= (currentTime + 2))) {
+                if (!(timestamp >= (currentTime - 300) && timestamp <= (currentTime + 300))) {
                     if (debugMode) {
                         logger.warning("Current time: " + currentTime + ", Timestamp Time: " + timestamp);
                     }
-                    throw new Exception("Invalid signature timestamp, please check system's local clock if error persists.");
+                    //throw new Exception("Invalid signature timestamp, please check system's local clock if error persists.");
                 }
 
                 try {

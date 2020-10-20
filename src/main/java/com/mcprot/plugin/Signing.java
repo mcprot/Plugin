@@ -1,4 +1,4 @@
-package tachyon.plugin.utils;
+package com.mcprot.plugin;
 
 import com.google.common.io.ByteStreams;
 

@@ -1,5 +1,6 @@
-package tachyon.plugin;
+package com.mcprot.plugin;
 
+import com.mcprot.plugin.utils.ReflectionUtils;
 import io.netty.channel.AbstractChannel;
 import io.netty.channel.Channel;
 import net.md_5.bungee.api.ProxyServer;
@@ -12,8 +13,6 @@ import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 import net.md_5.bungee.event.EventHandler;
-import tachyon.plugin.utils.ReflectionUtils;
-import tachyon.plugin.utils.Signing;
 
 import java.io.File;
 import java.io.IOException;

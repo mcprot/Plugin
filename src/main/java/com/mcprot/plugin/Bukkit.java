@@ -1,10 +1,9 @@
-package tachyon.plugin;
+package com.mcprot.plugin;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
-import tachyon.plugin.utils.Signing;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;

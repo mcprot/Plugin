@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>tachyon.plugin</groupId>
-    <artifactId>TachyonPlugin</artifactId>
+    <groupId>com.mcprot</groupId>
+    <artifactId>MCProt</artifactId>
     <version>1.8-SNAPSHOT</version>
     <properties>
         <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
@@ -48,7 +48,7 @@
     </dependencies>
 
     <build>
-        <finalName>Tachyon</finalName>
+        <finalName>MCProt</finalName>
         <sourceDirectory>src/main/java</sourceDirectory>
         <resources>
             <resource>
@@ -57,7 +57,7 @@
                 <directory>${basedir}/src/main/resources/</directory>
                 <includes>
                     <include>*.yml</include>
-                    <include>*.pub</include>
+                    <include>*.pem</include>
                 </includes>
             </resource>
         </resources>
