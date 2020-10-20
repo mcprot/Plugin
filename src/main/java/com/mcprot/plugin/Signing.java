@@ -12,16 +12,16 @@ public class Signing {
     private static PublicKey publicKey;
 
     public static void init() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        byte[] encodedKey = ByteStreams.toByteArray(Signing.class.getResourceAsStream("/tachyon.pub"));
+        byte[] encodedKey = ByteStreams.toByteArray(Signing.class.getResourceAsStream("/public_key.der"));
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encodedKey);
 
-        KeyFactory keyFactory = KeyFactory.getInstance("EC");
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         publicKey = keyFactory.generatePublic(keySpec);
     }
 
     public static boolean verify(byte[] data, String signature) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         byte[] decodedSignature = Base64.getDecoder().decode(signature);
-        Signature sig = Signature.getInstance("SHA512withECDSA");
+        Signature sig = Signature.getInstance("SHA512withRSA");
         sig.initVerify(publicKey);
         sig.update(data);
         return sig.verify(decodedSignature);
